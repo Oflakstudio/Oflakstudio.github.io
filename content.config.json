@@ -8,6 +8,7 @@
   "certificates": {
     "folder": "assets/certificates",
     "order": [
+      "Forage - Branding & Design Job Simulation.jpg",
       "Digital Marketing Using Al - Skill Nation.jpg",
       "certificate-UI-UX.jpg",
       "Be10X Certificate.jpg",
@@ -19,6 +20,11 @@
       "manish_kumar_graphic_design_essentials-certificate.png"
     ],
     "meta": {
+      "Forage - Branding & Design Job Simulation.jpg": {
+        "name": "Branding & Design Job Simulation",
+        "issuer": "Forage",
+        "date": "Sep 2026"
+      },
       "Digital Marketing Using Al - Skill Nation.jpg": {
         "name": "Digital Marketing Using AI",
         "issuer": "Skill Nation",

@@ -13,8 +13,10 @@
      • Drop a NEW project folder into assets/projects/          → it shows up.
      • Swap the hero photo name in content.config.json          → it updates.
 
-   Existing projects stay CURATED: their image list lives in
-   content.config.json (edit the `media` array to show more/fewer).
+   Existing projects stay CURATED. To choose what shows, either:
+     • drop your chosen files into a `selected/` folder inside the project
+       (assets/projects/<name>/selected/) — they appear automatically; or
+     • edit the `media` list in content.config.json.
    Brand-new project folders auto-include their images so nothing is lost.
 
    USAGE
@@ -84,6 +86,23 @@ const exists = (p) => { try { return fs.existsSync(p); } catch (_) { return fals
 const isImage = (f) => IMAGE_EXT.includes(path.extname(f).toLowerCase());
 const isVideo = (f) => VIDEO_EXT.includes(path.extname(f).toLowerCase());
 const naturalSort = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+
+/* list media directly inside a project's `selected/` folder (shallow, natural sort).
+   Returns null if the folder doesn't exist; [] if it exists but holds no media. */
+function listSelectedMedia(absSelectedDir) {
+  let entries;
+  try { entries = fs.readdirSync(absSelectedDir, { withFileTypes: true }); }
+  catch (_) { return null; }                                   // no selected/ folder
+  return entries
+    .filter((d) => d.isFile() && !d.name.startsWith('.') && MEDIA_EXT.includes(path.extname(d.name).toLowerCase()))
+    .map((d) => d.name)
+    .sort(naturalSort);
+}
+/* drop a leading ordering prefix like "01 ", "1_", "02-" so captions stay clean
+   while file names still control order. Leaves names like "12.png" untouched. */
+function stripOrderPrefix(name) {
+  return name.replace(/^\s*\d+[ _-]+/, '');
+}
 
 /* ── text helpers ───────────────────────────────────────────── */
 function prettyName(filename) {
@@ -175,19 +194,44 @@ function buildAutoProject(folder, projectsFolderRel, cap, counters) {
   };
 }
 
-/* ── build one curated project (validate media exist) ───────── */
-function buildCuratedProject(folder, item) {
-  // media src paths in config are RELATIVE TO THE SITE ROOT (e.g.
-  // "assets/projects/<slug>/gallery/file.png"), so validate against ROOT.
-  const media = (item.media || []).filter((m) => {
-    const ok = exists(path.join(ROOT, m.src));
-    if (!ok) warn('project "' + folder + '" media not found (skipped):', m.src);
-    return ok;
-  });
-  // thumb fallback if the curated thumbnail is missing
+/* ── build one curated project ───────────────────────────────
+   Media source, in priority order:
+     1. a `selected/` sub-folder inside the project → its contents become
+        the gallery automatically (name order; captions from file names).
+        Lets you publish images with zero config editing.
+     2. otherwise the curated `media` list in content.config.json.
+   ------------------------------------------------------------- */
+function buildCuratedProject(folder, item, projectsFolderRel) {
+  projectsFolderRel = projectsFolderRel || 'assets/projects';
+  const selectedAbs = path.join(ROOT, projectsFolderRel, folder, 'selected');
+  const selected = listSelectedMedia(selectedAbs);
+
+  let media;
+  if (selected && selected.length) {
+    media = selected.map((f) => ({
+      type: isVideo(f) ? 'video' : 'image',
+      src: projectsFolderRel + '/' + folder + '/selected/' + f,
+      caption: prettyName(stripOrderPrefix(f)),
+    }));
+    log('   • "' + folder + '" → selected/ folder drives the gallery (' +
+        media.length + ' item' + (media.length === 1 ? '' : 's') + ')');
+  } else {
+    // media src paths in config are RELATIVE TO THE SITE ROOT (e.g.
+    // "assets/projects/<slug>/gallery/file.png"), so validate against ROOT.
+    media = (item.media || []).filter((m) => {
+      const ok = exists(path.join(ROOT, m.src));
+      if (!ok) warn('project "' + folder + '" media not found (skipped):', m.src);
+      return ok;
+    });
+  }
+
+  // thumbnail: keep the curated thumb when it exists; otherwise fall back to
+  // the first shown media item so the card is never blank.
   let thumb = (item.card && item.card.thumb) || '';
   if (thumb && !exists(path.join(ROOT, thumb))) {
     warn('project "' + folder + '" thumbnail not found, using first media:', thumb);
+    thumb = media.length ? media[0].src : '';
+  } else if (!thumb) {
     thumb = media.length ? media[0].src : '';
   }
   return {
@@ -233,7 +277,7 @@ function buildProjects(cfg, counters) {
 
   for (const f of finalFolders) {
     const built = items[f]
-      ? buildCuratedProject(f, items[f])
+      ? buildCuratedProject(f, items[f], folder)
       : buildAutoProject(f, folder, cap, counters);
     if (projects[built.slug]) {
       warn('duplicate slug "' + built.slug + '" — folder "' + f + '" skipped to avoid collision');

@@ -12,6 +12,13 @@ window.SITE_CONTENT = {
   },
   "certificates": [
     {
+      "file": "assets/certificates/Forage - Branding & Design Job Simulation.jpg",
+      "name": "Branding & Design Job Simulation",
+      "issuer": "Forage",
+      "date": "Sep 2026",
+      "alt": "Branding & Design Job Simulation — Forage certificate"
+    },
+    {
       "file": "assets/certificates/Digital Marketing Using Al - Skill Nation.jpg",
       "name": "Digital Marketing Using AI",
       "issuer": "Skill Nation",
