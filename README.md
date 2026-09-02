@@ -8,7 +8,7 @@ A fast, dependency-free portfolio site: hand-written HTML, CSS, and JavaScript w
 photo — is driven by a single config file and a tiny Node sync script, so the site
 stays fully static while remaining easy to update.
 
-**Live:** _add your deployment URL here_
+**Live:** _(https://oflakstudio.github.io/)_
 **Contact:** oflakstudio@gmail.com · +91 97701 49478 · Janjgir-Champa, Chhattisgarh, India
 [LinkedIn](https://www.linkedin.com/in/manish-kumar-5051023a9) · [Instagram](https://instagram.com/crea.graphix) · [GitHub](https://github.com/Oflakstudio)
 
